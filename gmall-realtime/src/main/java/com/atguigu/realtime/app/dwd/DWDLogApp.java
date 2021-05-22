@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.atguigu.realtime.app.BaseApp;
 import com.atguigu.realtime.common.Constant;
 import com.atguigu.realtime.util.MyCommonUtil;
+import com.atguigu.realtime.util.MyKafkaUtil;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
@@ -44,9 +45,15 @@ public class DWDLogApp extends BaseApp {
         
         // 2. 分流
         Tuple3<SingleOutputStreamOperator<JSONObject>, DataStream<JSONObject>, DataStream<JSONObject>> threeStream = splitStream(validateFlatStream);
-        threeStream.f0.print("start");
-        threeStream.f1.print("page");
-        threeStream.f2.print("display");
+        
+        // 3. 把数据写入到dwd层(kafka)
+        sendToKafka(threeStream);
+    }
+    
+    private void sendToKafka(Tuple3<SingleOutputStreamOperator<JSONObject>, DataStream<JSONObject>, DataStream<JSONObject>> threeStream) {
+        threeStream.f0.addSink(MyKafkaUtil.getKafkaSink(Constant.DWD_START_LOG));
+        threeStream.f1.addSink(MyKafkaUtil.getKafkaSink(Constant.DWD_PAGE_LOG));
+        threeStream.f2.addSink(MyKafkaUtil.getKafkaSink(Constant.DWD_DISPLAY_LOG));
     }
     
     private Tuple3<SingleOutputStreamOperator<JSONObject>, DataStream<JSONObject>, DataStream<JSONObject>> splitStream(SingleOutputStreamOperator<JSONObject> stream) {
@@ -71,6 +78,7 @@ public class DWDLogApp extends BaseApp {
                         // 1. 如果是页面
                         JSONObject page = value.getJSONObject("page");
                         if (page != null) {
+                            
                             ctx.output(pageTag, value);
                         }
                         // 2. 如是曝光
