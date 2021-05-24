@@ -5,11 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.atguigu.realtime.app.BaseApp;
 import com.atguigu.realtime.bean.TableProcess;
 import com.atguigu.realtime.common.Constant;
+import com.atguigu.realtime.util.MyKafkaUtil;
 import org.apache.flink.api.common.state.BroadcastState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
 import org.apache.flink.api.common.state.ReadOnlyBroadcastState;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.streaming.api.datastream.BroadcastStream;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -17,7 +19,9 @@ import org.apache.flink.streaming.api.functions.co.BroadcastProcessFunction;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.Collector;
+import org.apache.flink.util.OutputTag;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
@@ -25,10 +29,12 @@ import java.util.List;
  * @Author lizhenchao@atguigu.cn
  * @Date 2021/5/22 9:18
  */
-public class DWDDbApp extends BaseApp {
+public class DWDDbApp extends BaseApp implements Serializable {
     public static void main(String[] args) {
         new DWDDbApp().init(2002, 2, "DWDDbApp", "DWDDbApp", Constant.ODS_DB);
     }
+    
+    private OutputTag<Tuple2<JSONObject, TableProcess>> hbaseTag = new OutputTag<Tuple2<JSONObject, TableProcess>>("hbaseTag") {};
     
     @Override
     protected void run(StreamExecutionEnvironment env,
@@ -39,20 +45,38 @@ public class DWDDbApp extends BaseApp {
         SingleOutputStreamOperator<TableProcess> tableProcessStream = readTableProcess(env);
         
         // 3. 把配置表做成广播流, 与数据进行connect, 利用广播状态来控制每个数据流的流向
-        dynamicSplitStream(etledDataStream, tableProcessStream);
+        SingleOutputStreamOperator<Tuple2<JSONObject, TableProcess>> toKafkaStream = dynamicSplitStream(etledDataStream, tableProcessStream);
+        DataStream<Tuple2<JSONObject, TableProcess>> toHbaseStream = toKafkaStream.getSideOutput(hbaseTag);
+        
+        // 4. 数据sink到正确的位置
+        // 4.1 把数据写入到Kafka
+        sendToKafka(toKafkaStream);
+        // 4.2 把数据写入到HBase中
+        sentToHbase(toHbaseStream);
+        
+        
+    }
+    
+    private void sentToHbase(DataStream<Tuple2<JSONObject, TableProcess>> toHbaseStream) {
+    
+    
+    }
+    
+    private void sendToKafka(SingleOutputStreamOperator<Tuple2<JSONObject, TableProcess>> toKafkaStream) {
+        toKafkaStream.addSink(MyKafkaUtil.getKafkaSink());
     }
     
     // 动态分流
-    private void dynamicSplitStream(SingleOutputStreamOperator<JSONObject> etledDataStream,
-                                    SingleOutputStreamOperator<TableProcess> tableProcessStream) {
+    private SingleOutputStreamOperator<Tuple2<JSONObject, TableProcess>> dynamicSplitStream(SingleOutputStreamOperator<JSONObject> etledDataStream,
+                                                                                            SingleOutputStreamOperator<TableProcess> tableProcessStream) {
         MapStateDescriptor<String, TableProcess> tableProcessMapStateDescriptor =
             new MapStateDescriptor<>("tableProcessState", String.class, TableProcess.class);
         
         // Key的类型: "order_info:insert"   value的类型:
         BroadcastStream<TableProcess> tableProcessBCStream = tableProcessStream
             .broadcast(tableProcessMapStateDescriptor);
-    
-        etledDataStream
+        
+        return etledDataStream
             .connect(tableProcessBCStream)
             .process(new BroadcastProcessFunction<JSONObject, TableProcess, Tuple2<JSONObject, TableProcess>>() {
                 @Override
@@ -60,10 +84,10 @@ public class DWDDbApp extends BaseApp {
                                            ReadOnlyContext ctx,
                                            Collector<Tuple2<JSONObject, TableProcess>> out) throws Exception {
                     ReadOnlyBroadcastState<String, TableProcess> bdState = ctx.getBroadcastState(tableProcessMapStateDescriptor);
-                
+                    
                     String sourceTable = value.getString("table");
                     String operateType = value.getString("type").replaceAll("bootstrap-", "");
-                
+                    
                     String key = sourceTable + ":" + operateType;
                     TableProcess tableProcess = bdState.get(key);
                     if (tableProcess != null) {
@@ -72,16 +96,25 @@ public class DWDDbApp extends BaseApp {
                         JSONObject data = value.getJSONObject("data");
                         // 2. 把data中需要的字段保留, 其他的去掉.  由sink_columns来确定
                         filterSinkColumns(data, tableProcess);
+                        
+                        // 3. 对数据做分流: 主流的进入 Kakfa, 测流就如 Hbase
+                        String sinkType = tableProcess.getSinkType();
+                        System.out.println(sinkType);
+                        if (TableProcess.SINK_TYPE_KAFKA.equalsIgnoreCase(sinkType)) {
+                            out.collect(Tuple2.of(data, tableProcess));
+                        } else if (TableProcess.SINK_TYPE_HBASE.equalsIgnoreCase(sinkType)) {
+                            ctx.output(hbaseTag, Tuple2.of(data, tableProcess));
+                        }
                     }
                 }
-    
+                
                 // 过滤掉不需要的字段
                 private void filterSinkColumns(JSONObject data, TableProcess tableProcess) {
                     List<String> columns = Arrays.asList(tableProcess.getSinkColumns().split(","));
                     //把data中那些没有出现在columns数组中的key删掉
-                    data.keySet().removeIf(columns::contains);  // 删除是原地删除: 直接修改的是原来的集合
+                    data.keySet().removeIf(key -> !columns.contains(key));  // 删除是原地删除: 直接修改的是原来的集合
                 }
-    
+                
                 @Override
                 public void processBroadcastElement(TableProcess value,
                                                     Context ctx,
@@ -90,10 +123,10 @@ public class DWDDbApp extends BaseApp {
                     BroadcastState<String, TableProcess> bdState = ctx.getBroadcastState(tableProcessMapStateDescriptor);
                     // 把配置数据存入的广播状态
                     bdState.put(value.getSourceTable() + ":" + value.getOperateType(), value);
-                
+                    
                 }
-            })
-            .print();
+            });
+        
     }
     
     // 对数据进行清洗
