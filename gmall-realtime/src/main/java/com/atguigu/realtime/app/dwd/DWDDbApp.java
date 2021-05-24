@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.atguigu.realtime.app.BaseApp;
 import com.atguigu.realtime.bean.TableProcess;
 import com.atguigu.realtime.common.Constant;
+import com.atguigu.realtime.sink.MyPhoenixSinkFunction;
 import com.atguigu.realtime.util.MyKafkaUtil;
 import org.apache.flink.api.common.state.BroadcastState;
 import org.apache.flink.api.common.state.MapStateDescriptor;
@@ -58,9 +59,15 @@ public class DWDDbApp extends BaseApp implements Serializable {
     }
     
     private void sentToHbase(DataStream<Tuple2<JSONObject, TableProcess>> toHbaseStream) {
-    
-    
+        // 自定义sink, 不用从头开始: 可以对 jdbc sink 做封装, 来实现到Phoenix写入
+        // 为了提高性能, 最好同一张表的数据进入同一个地方
+        toHbaseStream
+            .keyBy(t -> t.f1.getSinkTable())
+            .addSink(new MyPhoenixSinkFunction());
     }
+    
+    
+    
     
     private void sendToKafka(SingleOutputStreamOperator<Tuple2<JSONObject, TableProcess>> toKafkaStream) {
         toKafkaStream.addSink(MyKafkaUtil.getKafkaSink());
