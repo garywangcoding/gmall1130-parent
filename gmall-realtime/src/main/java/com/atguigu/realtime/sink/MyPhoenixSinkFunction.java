@@ -40,6 +40,47 @@ public class MyPhoenixSinkFunction extends RichSinkFunction<Tuple2<JSONObject, T
         // 每执行一次, 通过jdbc操作, 把这条数据写入到 Phoenix 中
         //1. 动态的建表, 先判断表是否存在, 如果存在则不创建这个表, 否则再去创建
         checkTable(value);  // 对表是否创建进行检测
+        // 2. 把数据写入到Hbase中
+        write2Hbase(value);  // 2 two to 4 four for  i18u 国际化
+        
+    }
+    
+    private void write2Hbase(Tuple2<JSONObject, TableProcess> data) throws SQLException {
+        TableProcess tp = data.f1;
+        JSONObject obj = data.f0;  // 具体的数据: {"id":1,"spu_name":"小米10","description":"小米10","category3_id":61,"tm_id":1}
+        // upsert into user (id, user, age) values(?,?,?)
+        StringBuilder sql = new StringBuilder();
+        sql
+            .append("upsert into ")
+            .append(tp.getSinkTable())
+            .append("(");
+        
+        for (String c : tp.getSinkColumns().split(",")) {
+            sql.append(c).append(",");
+            
+        }
+        sql.deleteCharAt(sql.length() - 1);  // 删除最后一个多余的引号
+        
+        sql.append(") values(");
+        for (String c : tp.getSinkColumns().split(",")) {
+            sql.append("?,");
+        }
+        sql.deleteCharAt(sql.length() - 1);
+        sql.append(")");
+        
+        PreparedStatement ps = conn.prepareStatement(sql.toString());
+        
+        // 给占位符赋值
+        String[] cs = tp.getSinkColumns().split(",");
+        for (int i = 0, len = cs.length; i < len; i++) {
+            String v = obj.get(cs[i]) == null ? null: obj.get(cs[i]).toString();  // null -> "null"  ""
+            ps.setObject(i + 1, v);
+        }
+        
+        ps.execute();
+        conn.commit();
+        ps.close();
+        
     }
     
     private void checkTable(Tuple2<JSONObject, TableProcess> value) throws IOException, SQLException {
@@ -50,7 +91,7 @@ public class MyPhoenixSinkFunction extends RichSinkFunction<Tuple2<JSONObject, T
             
             StringBuilder createTableSql = new StringBuilder();
             createTableSql
-                .append("create table ")
+                .append("create table if not exists ")
                 .append(tp.getSinkTable())
                 .append("(");
             
