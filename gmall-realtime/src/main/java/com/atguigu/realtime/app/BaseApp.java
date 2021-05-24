@@ -35,7 +35,7 @@ public abstract class BaseApp {
         DataStreamSource<String> sourceStream = env.addSource(MyKafkaUtil.getKafkaSource(groupId, topic));
         run(env, sourceStream);
         try {
-            env.execute();
+            env.execute(ck);  // 使用ck作为jobName
         } catch (Exception e) {
             e.printStackTrace();
         }
