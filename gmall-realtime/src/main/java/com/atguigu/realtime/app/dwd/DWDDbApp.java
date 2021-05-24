@@ -18,6 +18,9 @@ import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.apache.flink.util.Collector;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * @Author lizhenchao@atguigu.cn
  * @Date 2021/5/22 9:18
@@ -63,9 +66,22 @@ public class DWDDbApp extends BaseApp {
                 
                     String key = sourceTable + ":" + operateType;
                     TableProcess tableProcess = bdState.get(key);
-                    out.collect(Tuple2.of(value, tableProcess));
+                    if (tableProcess != null) {
+                        // 开始向后进行处理
+                        // 1. 获取真正的数据
+                        JSONObject data = value.getJSONObject("data");
+                        // 2. 把data中需要的字段保留, 其他的去掉.  由sink_columns来确定
+                        filterSinkColumns(data, tableProcess);
+                    }
                 }
-            
+    
+                // 过滤掉不需要的字段
+                private void filterSinkColumns(JSONObject data, TableProcess tableProcess) {
+                    List<String> columns = Arrays.asList(tableProcess.getSinkColumns().split(","));
+                    //把data中那些没有出现在columns数组中的key删掉
+                    data.keySet().removeIf(columns::contains);  // 删除是原地删除: 直接修改的是原来的集合
+                }
+    
                 @Override
                 public void processBroadcastElement(TableProcess value,
                                                     Context ctx,
