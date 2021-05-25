@@ -13,4 +13,6 @@ public class Constant {
     
     public static final String DWM_UV = "dwm_uv";
     public static final String DWM_JUMP_DETAIL = "dwm_jump_detail";
+    public static final String DWD_ORDER_INFO = "dwd_order_info";
+    public static final String DWD_ORDER_DETAIL = "dwd_order_detail";
 }

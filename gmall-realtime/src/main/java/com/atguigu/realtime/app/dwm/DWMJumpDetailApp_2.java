@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.realtime.app.BaseApp;
 import com.atguigu.realtime.common.Constant;
-import com.atguigu.realtime.util.MyKafkaUtil;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.cep.CEP;
 import org.apache.flink.cep.PatternSelectFunction;
@@ -38,17 +37,20 @@ public class DWMJumpDetailApp_2 extends BaseApp {
     protected void run(StreamExecutionEnvironment env,
                        DataStreamSource<String> sourceStream) {
     
-       /* sourceStream =
+        /*sourceStream =
             env.fromElements(
                 "{\"common\":{\"mid\":\"101\"},\"page\":{\"page_id\":\"home\"},\"ts\":10000} ",
-                "{\"common\":{\"mid\":\"101\"},\"page\":{\"page_id\":\"other\"},\"ts\":20000} ",
+                "{\"common\":{\"mid\":\"101\"},\"page\":{\"page_id\":\"good_list\",\"last_page_id\":" +
+                    "\"home\"},\"ts\":10000} ",
+                
+                
                 "{\"common\":{\"mid\":\"102\"},\"page\":{\"page_id\":\"home\"},\"ts\":10000}",
                 "{\"common\":{\"mid\":\"102\"},\"page\":{\"page_id\":\"good_list\",\"last_page_id\":" +
                     "\"home\"},\"ts\":39999} ",
                 "{\"common\":{\"mid\":\"102\"},\"page\":{\"page_id\":\"good_list\",\"last_page_id\":" +
                     "\"detail\"},\"ts\":50000} "
-            );
-    */
+            );*/
+    
     
         // 1. 先有流   使用事件时间
         KeyedStream<JSONObject, String> pageStream = sourceStream
@@ -103,7 +105,8 @@ public class DWMJumpDetailApp_2 extends BaseApp {
     
         normal
             .union(jump)
-            .addSink(MyKafkaUtil.getKafkaSink(Constant.DWM_JUMP_DETAIL));
+            //.addSink(MyKafkaUtil.getKafkaSink(Constant.DWM_JUMP_DETAIL));
+            .print();
     
     }
 }
