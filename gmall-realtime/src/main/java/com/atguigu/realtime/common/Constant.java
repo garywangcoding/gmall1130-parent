@@ -11,4 +11,5 @@ public class Constant {
     public static final String DWD_START_LOG = "dwd_start_log";
     public static final String DWD_DISPLAY_LOG = "dwd_display_log";
     
+    public static final String DWM_UV = "dwm_uv";
 }
