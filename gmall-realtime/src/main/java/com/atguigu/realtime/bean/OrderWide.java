@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 
 /**
  * @Author lizhenchao@atguigu.cn
@@ -109,5 +111,13 @@ public class OrderWide {
         this.split_activity_amount = ObjectUtils.firstNonNull(this.split_activity_amount);
         this.split_coupon_amount = ObjectUtils.firstNonNull(this.split_coupon_amount);
         this.split_total_amount = ObjectUtils.firstNonNull(this.split_total_amount);
+    }
+    
+    public void setUser_age(String birthday) throws ParseException {
+        long today = System.currentTimeMillis();
+        long bir = new SimpleDateFormat("yyyy-MM-dd").parse(birthday).getTime();
+        
+        this.user_age = Math.toIntExact((today - bir) / 1000 / 60 / 60 / 24 / 365);
+    
     }
 }
