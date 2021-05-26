@@ -135,7 +135,7 @@ public class DWMOderWideApp extends BaseAppV2 {
                                            OrderDetail right,
                                            Context ctx,
                                            Collector<OrderWide> out) throws Exception {
-                    System.out.println(ctx.getLeftTimestamp());
+                    //System.out.println(ctx.getLeftTimestamp());
                     
                     out.collect(new OrderWide(left, right));
                 }
