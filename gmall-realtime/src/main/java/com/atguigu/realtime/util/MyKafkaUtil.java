@@ -1,5 +1,6 @@
 package com.atguigu.realtime.util;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.realtime.bean.TableProcess;
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
@@ -31,16 +32,16 @@ public class MyKafkaUtil {
         return new FlinkKafkaConsumer<String>(topic, new SimpleStringSchema(), props);
     }
     
-    public static SinkFunction<JSONObject> getKafkaSink(String topic) {
+    public static <T> SinkFunction<T> getKafkaSink(String topic) {
         Properties props = new Properties();
         props.setProperty("bootstrap.servers", "hadoop162:9092,hadoop163:9092,hadoop164:9092");
         props.setProperty("transaction.timeout.ms", 14 * 60 * 1000 + "");
-        return new FlinkKafkaProducer<JSONObject>(
+        return new FlinkKafkaProducer<T>(
             topic,
-            new KafkaSerializationSchema<JSONObject>() {
+            new KafkaSerializationSchema<T>() {
                 @Override
-                public ProducerRecord<byte[], byte[]> serialize(JSONObject element, @Nullable Long timestamp) {
-                    return new ProducerRecord<>(topic, null, element.toJSONString().getBytes(StandardCharsets.UTF_8));
+                public ProducerRecord<byte[], byte[]> serialize(T element, @Nullable Long timestamp) {
+                    return new ProducerRecord<>(topic, null, JSON.toJSONString(element).getBytes(StandardCharsets.UTF_8));
                 }
             },
             props,

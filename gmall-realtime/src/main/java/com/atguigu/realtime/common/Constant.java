@@ -15,6 +15,7 @@ public class Constant {
     public static final String DWM_JUMP_DETAIL = "dwm_jump_detail";
     public static final String DWD_ORDER_INFO = "dwd_order_info";
     public static final String DWD_ORDER_DETAIL = "dwd_order_detail";
+    public static final String DWM_ORDER_WIDE = "dwm_order_wide";  // alt+return
     
     public static final String PHOENIX_DRIVER = "org.apache.phoenix.jdbc.PhoenixDriver";
     public static final String PHOENIX_URL = "jdbc:phoenix:hadoop162,hadoop163,hadoop164:2181";
@@ -25,4 +26,6 @@ public class Constant {
     public static final String DIM_BASE_TRADEMARK = "DIM_BASE_TRADEMARK";
     public static final String DIM_BASE_PROVINCE = "DIM_BASE_PROVINCE";
     public static final String DIM_BASE_CATEGORY3 = "DIM_BASE_CATEGORY3";
+    
+    
 }

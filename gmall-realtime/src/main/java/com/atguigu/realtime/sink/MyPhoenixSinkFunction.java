@@ -2,11 +2,13 @@ package com.atguigu.realtime.sink;
 
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.realtime.bean.TableProcess;
+import com.atguigu.realtime.util.MyRedisUtil;
 import org.apache.flink.api.common.state.ValueState;
 import org.apache.flink.api.common.state.ValueStateDescriptor;
 import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import redis.clients.jedis.Jedis;
 
 import java.io.IOException;
 import java.sql.Connection;
@@ -43,6 +45,20 @@ public class MyPhoenixSinkFunction extends RichSinkFunction<Tuple2<JSONObject, T
         // 2. 把数据写入到Hbase中
         write2Hbase(value);  // 2 two to 4 four for  i18u 国际化
         
+        // 3. 删除缓存中的旧数据
+        delCache(value);
+        
+    }
+    
+    private void delCache(Tuple2<JSONObject, TableProcess> value) {
+        // f0:  {id: .. }
+        Jedis client = MyRedisUtil.getRedisClient();
+        // 注意表名的大小写: 从mysql出来的时候表名是小写, 存入Phoenix之后就自动成为了大小, 在redis存储的也是大小
+        String key = value.f1.getSinkTable().toUpperCase() + ":" + value.f0.get("id");
+        
+        client.del(key);
+        //        client.setex(key, 3 * 24 * 60 * 60, value.f0.toString());
+        client.close();
     }
     
     private void write2Hbase(Tuple2<JSONObject, TableProcess> data) throws SQLException {
@@ -73,7 +89,7 @@ public class MyPhoenixSinkFunction extends RichSinkFunction<Tuple2<JSONObject, T
         // 给占位符赋值
         String[] cs = tp.getSinkColumns().split(",");
         for (int i = 0, len = cs.length; i < len; i++) {
-            String v = obj.get(cs[i]) == null ? null: obj.get(cs[i]).toString();  // null -> "null"  ""
+            String v = obj.get(cs[i]) == null ? null : obj.get(cs[i]).toString();  // null -> "null"  ""
             ps.setObject(i + 1, v);
         }
         
