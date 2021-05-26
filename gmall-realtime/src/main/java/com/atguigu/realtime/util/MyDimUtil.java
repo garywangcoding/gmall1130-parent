@@ -14,18 +14,6 @@ import java.util.List;
  */
 public class MyDimUtil {
     
-    public static JSONObject readDimFromPhoenix(Connection conn,
-                                                String table,
-                                                Object id) throws Exception {
-        // select * from table where id=..
-        String sql = "select * from " + table + " where id=?";
-        List<JSONObject> list = MyJdbcUtil.queryList(conn, sql, new Object[]{id.toString()}, JSONObject.class);
-        if (list.size() > 0) {
-            return list.get(0);
-        }
-        return new JSONObject();
-    }
-    
     public static void main(String[] args) throws Exception {
         /*Connection conn = MyJdbcUtil.getConnection(Constant.PHOENIX_DRIVER, Constant.PHOENIX_URL);
         JSONObject obj = readDim(conn, "dim_user_info", 1);*/
@@ -37,6 +25,18 @@ public class MyDimUtil {
         for (OrderInfo hashMap : obj) {
             System.out.println(hashMap);
         }
+    }
+    
+    public static JSONObject readDimFromPhoenix(Connection conn,
+                                                String table,
+                                                Object id) throws Exception {
+        // select * from table where id=..
+        String sql = "select * from " + table + " where id=?";
+        List<JSONObject> list = MyJdbcUtil.queryList(conn, sql, new Object[]{id.toString()}, JSONObject.class);
+        if (list.size() > 0) {
+            return list.get(0);
+        }
+        return new JSONObject();
     }
     
     public static JSONObject readDim(Connection conn,
