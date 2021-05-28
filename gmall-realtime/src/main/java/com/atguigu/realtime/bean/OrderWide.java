@@ -113,11 +113,15 @@ public class OrderWide {
         this.split_total_amount = ObjectUtils.firstNonNull(this.split_total_amount);
     }
     
+    public void setUser_age(Integer user_age) {
+        this.user_age = user_age;
+    }
+    
     public void setUser_age(String birthday) throws ParseException {
         long today = System.currentTimeMillis();
         long bir = new SimpleDateFormat("yyyy-MM-dd").parse(birthday).getTime();
         
         this.user_age = Math.toIntExact((today - bir) / 1000 / 60 / 60 / 24 / 365);
-    
+        
     }
 }

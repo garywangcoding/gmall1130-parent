@@ -79,6 +79,7 @@ public class DWMOderWideApp_Cache_Async extends BaseAppV2 {
                     pool.execute(new Runnable() {
                         @Override
                         public void run() {
+                            // 一个异步操作, 一个redis的客户端
                             Jedis client = MyRedisUtil.getRedisClient();
                             try {
                                 // 1. 读取用户维度信息

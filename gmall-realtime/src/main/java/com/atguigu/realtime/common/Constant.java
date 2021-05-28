@@ -27,5 +27,6 @@ public class Constant {
     public static final String DIM_BASE_PROVINCE = "DIM_BASE_PROVINCE";
     public static final String DIM_BASE_CATEGORY3 = "DIM_BASE_CATEGORY3";
     
-    
+    public static final String DWD_PAYMENT_INFO = "dwd_payment_info";
+    public static final String DWM_PAYMENT_WIDE = "dwm_payment_wide";
 }
