@@ -158,6 +158,12 @@
             <artifactId>phoenix-core</artifactId>
             <version>5.0.0-HBase-2.0</version>
             <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.glassfish</groupId>
+                    <artifactId>javax.el</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
 
