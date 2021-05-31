@@ -31,7 +31,7 @@ import java.util.Map;
 public class DWMJumpDetailApp_2 extends BaseApp {
     public static void main(String[] args) {
         // 最终的目的: 是找到跳出的记录, 最后写入到Kafka
-        new DWMJumpDetailApp_2().init(3002, 2, "DWMJumpDetailApp_2", "DWMJumpDetailApp_2", Constant.DWD_PAGE_LOG);
+        new DWMJumpDetailApp_2().init(3002, 1, "DWMJumpDetailApp_2", "DWMJumpDetailApp_2", Constant.DWD_PAGE_LOG);
     }
     
     @Override

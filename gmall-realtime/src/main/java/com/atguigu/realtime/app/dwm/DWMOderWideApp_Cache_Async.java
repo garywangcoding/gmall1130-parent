@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class DWMOderWideApp_Cache_Async extends BaseAppV2 {
     public static void main(String[] args) {
         new DWMOderWideApp_Cache_Async().init(3003,
-                                              2,
+                                              1,
                                               "DWMOderWideApp_Cache",
                                               "DWMOderWideApp_Cache",
                                               Constant.DWD_ORDER_INFO,

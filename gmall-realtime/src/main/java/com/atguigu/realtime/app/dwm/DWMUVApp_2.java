@@ -33,7 +33,7 @@ import java.util.Date;
  */
 public class DWMUVApp_2 extends BaseApp {
     public static void main(String[] args) {
-        new DWMUVApp_2().init(3001, 2, "DWMUVApp_2", "DWMUVApp_2", Constant.DWD_PAGE_LOG);
+        new DWMUVApp_2().init(3001, 1, "DWMUVApp_2", "DWMUVApp_2", Constant.DWD_PAGE_LOG);
     }
     
     @Override

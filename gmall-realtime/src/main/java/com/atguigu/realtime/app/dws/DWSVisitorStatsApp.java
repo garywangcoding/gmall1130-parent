@@ -31,7 +31,7 @@ import static com.atguigu.realtime.common.Constant.*;
  */
 public class DWSVisitorStatsApp extends BaseAppV2 {
     public static void main(String[] args) {
-        new DWSVisitorStatsApp().init(4001, 2, "DWSVisitorStatsApp", "DWSVisitorStatsApp",
+        new DWSVisitorStatsApp().init(4001, 1, "DWSVisitorStatsApp", "DWSVisitorStatsApp",
                                       DWD_PAGE_LOG, DWM_UV, DWM_JUMP_DETAIL);
     }
     

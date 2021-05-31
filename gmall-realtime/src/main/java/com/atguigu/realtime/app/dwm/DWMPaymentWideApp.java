@@ -28,7 +28,7 @@ import static com.atguigu.realtime.common.Constant.DWM_ORDER_WIDE;
  */
 public class DWMPaymentWideApp extends BaseAppV2 {
     public static void main(String[] args) {
-        new DWMPaymentWideApp().init(3004, 2, "DWMPaymentWideApp", "DWMPaymentWideApp",
+        new DWMPaymentWideApp().init(3004, 1, "DWMPaymentWideApp", "DWMPaymentWideApp",
                                      DWD_PAYMENT_INFO,
                                      DWM_ORDER_WIDE);
     }

@@ -32,7 +32,7 @@ import java.util.List;
  */
 public class DWDDbApp extends BaseApp implements Serializable {
     public static void main(String[] args) {
-        new DWDDbApp().init(2002, 2, "DWDDbApp", "DWDDbApp", Constant.ODS_DB);
+        new DWDDbApp().init(2002, 1, "DWDDbApp", "DWDDbApp", Constant.ODS_DB);
     }
     
     private OutputTag<Tuple2<JSONObject, TableProcess>> hbaseTag = new OutputTag<Tuple2<JSONObject, TableProcess>>("hbaseTag") {};
