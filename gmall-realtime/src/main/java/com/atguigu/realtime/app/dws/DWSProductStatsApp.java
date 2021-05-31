@@ -3,25 +3,33 @@ package com.atguigu.realtime.app.dws;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.realtime.app.BaseAppV2;
+import com.atguigu.realtime.app.function.DimAsyncFunction;
 import com.atguigu.realtime.bean.OrderWide;
 import com.atguigu.realtime.bean.PaymentWide;
 import com.atguigu.realtime.bean.ProductStats;
+import com.atguigu.realtime.util.MyDimUtil;
 import com.atguigu.realtime.util.MyTimeUtil;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.ReduceFunction;
+import org.apache.flink.streaming.api.datastream.AsyncDataStream;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.datastream.SingleOutputStreamOperator;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
+import org.apache.flink.streaming.api.functions.async.ResultFuture;
 import org.apache.flink.streaming.api.functions.windowing.WindowFunction;
 import org.apache.flink.streaming.api.windowing.assigners.TumblingEventTimeWindows;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow;
 import org.apache.flink.util.Collector;
+import redis.clients.jedis.Jedis;
 
+import java.sql.Connection;
 import java.time.Duration;
+import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.atguigu.realtime.common.Constant.*;
 
@@ -47,13 +55,55 @@ public class DWSProductStatsApp extends BaseAppV2 {
         
         // 添加水印, 开窗, 聚合
         SingleOutputStreamOperator<ProductStats> aggregateResult = aggregateByWindowAndSkuId(productStatsStream);
+        
+        // join 维度信息
+        SingleOutputStreamOperator<ProductStats> resultStream = joinDim(aggregateResult);
+        resultStream.print();
+        // 写入到clickhouse
+        
+    }
     
-        aggregateResult.print();
-    
+    private SingleOutputStreamOperator<ProductStats> joinDim(SingleOutputStreamOperator<ProductStats> aggregateResult) {
+        return AsyncDataStream.unorderedWait(
+            aggregateResult,
+            new DimAsyncFunction<ProductStats>() {
+                @Override
+                protected void addDim(Connection conn,
+                                      Jedis client,
+                                      ProductStats input,
+                                      ResultFuture<ProductStats> resultFuture) throws Exception {
+                    // 1. skuInfo
+                    JSONObject skuInfo = MyDimUtil.readDim(conn, client, DIM_SKU_INFO, input.getSku_id());
+                    input.setSku_name(skuInfo.getString("SKU_NAME"));
+                    input.setSku_price(skuInfo.getBigDecimal("PRICE"));
+                    
+                    input.setSpu_id(skuInfo.getLong("SPU_ID"));
+                    input.setTm_id(skuInfo.getLong("TM_ID"));
+                    input.setCategory3_id(skuInfo.getLong("CATEGORY3_ID"));
+                    
+                    // 2. 补齐spu_info
+                    JSONObject spuInfo = MyDimUtil.readDim(conn, client, DIM_SPU_INFO, input.getSpu_id());
+                    input.setSpu_name(spuInfo.getString("SPU_NAME"));
+                    
+                    // 3. 补齐 tm
+                    JSONObject tmInfo = MyDimUtil.readDim(conn, client, DIM_BASE_TRADEMARK, input.getTm_id());
+                    input.setTm_name(tmInfo.getString("TM_NAME"));
+                    
+                    // 4. 补齐category3
+                    JSONObject c3 = MyDimUtil.readDim(conn, client, DIM_BASE_CATEGORY3, input.getCategory3_id());
+                    input.setCategory3_name(c3.getString("NAME"));
+                    
+                    resultFuture.complete(Collections.singletonList(input));
+                    
+                }
+            },
+            30,
+            TimeUnit.SECONDS
+        );
     }
     
     private SingleOutputStreamOperator<ProductStats> aggregateByWindowAndSkuId(DataStream<ProductStats> productStatsStream) {
-      return  productStatsStream
+        return productStatsStream
             .assignTimestampsAndWatermarks(
                 WatermarkStrategy
                     .<ProductStats>forBoundedOutOfOrderness(Duration.ofSeconds(5))
@@ -105,12 +155,12 @@ public class DWSProductStatsApp extends BaseAppV2 {
                         ps.setStt(MyTimeUtil.tsToDateTimeString(window.getStart()));
                         ps.setEdt(MyTimeUtil.tsToDateTimeString(window.getEnd()));
                         
-                        ps.setOrder_ct((long)ps.getOrderIdSet().size());
-                        ps.setPaid_order_ct((long)ps.getPaidOrderIdSet().size());
-                        ps.setRefund_order_ct((long)ps.getRefundOrderIdSet().size());
-    
+                        ps.setOrder_ct((long) ps.getOrderIdSet().size());
+                        ps.setPaid_order_ct((long) ps.getPaidOrderIdSet().size());
+                        ps.setRefund_order_ct((long) ps.getRefundOrderIdSet().size());
+                        
                         out.collect(ps);
-    
+                        
                     }
                 }
             );
