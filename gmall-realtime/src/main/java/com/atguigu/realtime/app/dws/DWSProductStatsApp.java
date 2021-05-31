@@ -94,7 +94,6 @@ public class DWSProductStatsApp extends BaseAppV2 {
                     input.setCategory3_name(c3.getString("NAME"));
                     
                     resultFuture.complete(Collections.singletonList(input));
-                    
                 }
             },
             30,
