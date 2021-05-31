@@ -40,5 +40,8 @@ public class Constant {
     public static final String CLICKHOSUE_URL_PRE = "jdbc:clickhouse://hadoop162:8123/";
     public static final String CLICKHOSUE_DRIVER = "ru.yandex.clickhouse.ClickHouseDriver";
     
+    public static final String GOOD_COMMENT_FIVE_STARS = "1205";
+    public static final String GOOD_COMMENT_FOUR_STARS = "1204";
+    
     
 }

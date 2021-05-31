@@ -2,6 +2,7 @@ package com.atguigu.realtime.util;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * @Author lizhenchao@atguigu.cn
@@ -20,5 +21,9 @@ public class MyTimeUtil {
             e.printStackTrace();
         }
         return 0L;
+    }
+    
+    public static String tsToDateTimeString(long ts) {
+        return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(ts));
     }
 }
