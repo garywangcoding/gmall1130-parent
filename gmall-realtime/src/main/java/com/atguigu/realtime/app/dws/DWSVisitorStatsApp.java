@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.atguigu.realtime.app.BaseAppV2;
 import com.atguigu.realtime.bean.VisitorStats;
+import com.atguigu.realtime.util.MySinkUtil;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -41,12 +42,21 @@ public class DWSVisitorStatsApp extends BaseAppV2 {
         // 1. 解析并union
         DataStream<VisitorStats> statsStream = parseStreamsAndUnion(dsMap);
         // 2. 开窗聚合
-        aggregateByWindowAndDim(statsStream);
+        SingleOutputStreamOperator<VisitorStats> aggregatedStream = aggregateByWindowAndDim(statsStream);
+        
+        // 3. 把数据写入到ClickHouse中
+        sendToClickHouse(aggregatedStream);
         
     }
     
-    private void aggregateByWindowAndDim(DataStream<VisitorStats> statsStream) {
-        statsStream
+    private void sendToClickHouse(SingleOutputStreamOperator<VisitorStats> aggregatedStream) {
+        aggregatedStream.addSink(MySinkUtil.getClickHouseSink(CLICKHOUSE_DB,
+                                                              CLICKHOSUE_TABLE_VISITOR_STATS_2021,
+                                                              VisitorStats.class));
+    }
+    
+    private SingleOutputStreamOperator<VisitorStats> aggregateByWindowAndDim(DataStream<VisitorStats> statsStream) {
+        return statsStream
             .assignTimestampsAndWatermarks(
                 WatermarkStrategy
                     .<VisitorStats>forBoundedOutOfOrderness(Duration.ofSeconds(5))
@@ -82,8 +92,7 @@ public class DWSVisitorStatsApp extends BaseAppV2 {
                         
                     }
                 }
-            )
-            .print();
+            );
     }
     
     private DataStream<VisitorStats> parseStreamsAndUnion(Map<String, DataStreamSource<String>> dsMap) {
