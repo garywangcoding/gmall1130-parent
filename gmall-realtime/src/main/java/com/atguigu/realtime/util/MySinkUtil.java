@@ -70,6 +70,7 @@ public class MySinkUtil {
                     try {
                         Field[] fields = t.getClass().getDeclaredFields();
                         for (int i = 0; i < fields.length; i++) {
+                            fields[i].setAccessible(true);
                             Object value = fields[i].get(t);
                             ps.setObject(i + 1, value);
                         }
