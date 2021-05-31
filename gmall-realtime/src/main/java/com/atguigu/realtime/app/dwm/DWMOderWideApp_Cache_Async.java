@@ -36,8 +36,8 @@ public class DWMOderWideApp_Cache_Async extends BaseAppV2 {
     public static void main(String[] args) {
         new DWMOderWideApp_Cache_Async().init(3003,
                                               1,
-                                              "DWMOderWideApp_Cache",
-                                              "DWMOderWideApp_Cache",
+                                              "DWMOderWideApp_Cache_Async",
+                                              "DWMOderWideApp_Cache_Async",
                                               Constant.DWD_ORDER_INFO,
                                               Constant.DWD_ORDER_DETAIL);
     }
