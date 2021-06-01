@@ -1,6 +1,7 @@
 package com.atguigu.realtime.app.dws;
 
 import com.atguigu.realtime.app.BaseAppSQL;
+import com.atguigu.realtime.app.function.KeyWordUdtf;
 import com.atguigu.realtime.common.Constant;
 import org.apache.flink.table.api.Table;
 import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
@@ -16,7 +17,7 @@ public class DWSKeyWordStatsApp extends BaseAppSQL {
     
     @Override
     protected void run(StreamTableEnvironment tEnv) {
-        tEnv.getConfig().getConfiguration().setString("pipeline.name", "DWSKeyWordStatsApp");
+        
         // 建表和kafka关联
         tEnv.executeSql("CREATE TABLE page_view (" +
                             "   common MAP<STRING,STRING>, " +
@@ -63,14 +64,30 @@ public class DWSKeyWordStatsApp extends BaseAppSQL {
         
         // 2. 对用户搜索的关键词进行分词
         // 分词函数是什么函数?
-        tEnv.sqlQuery("select" +
-                          "w, " +
-                          "rowtime " +
-                          "from t1 " +
-                          "join lateral table(ik_analyzer(kw)) as T(w) on true");
+        tEnv.createTemporaryFunction("ik_analyzer", KeyWordUdtf.class);
+        Table t2 = tEnv.sqlQuery("select " +
+                                        "w, " +
+                                        "rowtime " +
+                                        "from t1 " +
+                                        "join lateral table(ik_analyzer(kw)) as T(w) on true");
         
+        tEnv.createTemporaryView("t2", t2);
+    
+        // 3. 开窗, 聚合
+        Table result = tEnv.sqlQuery("select " +
+                                        "date_format(tumble_start(rowtime, interval '5' second), 'yyyy-MM-dd HH:mm:ss') stt," +
+                                        "date_format(tumble_end(rowtime, interval '5' second), 'yyyy-MM-dd HH:mm:ss') edt," +
+                                        "w keyword, " +
+                                        "'" + Constant.SOURCE_SEARCH + "' source, " +
+                                        "count(*) ct, " +
+                                        "unix_timestamp() * 1000 ts " +
+                                        "from t2 " +
+                                        "group by " +
+                                        "tumble(rowtime, interval '5' second), w ");
     
         // 结果写入到clickhouse中
+        //result.executeInsert("keyword_stats_2021");
+        tEnv.executeSql("insert into keyword_stats_2021 select * from " + result);
         
     }
 }

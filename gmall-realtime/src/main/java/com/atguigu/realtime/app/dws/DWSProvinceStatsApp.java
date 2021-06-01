@@ -16,8 +16,7 @@ public class DWSProvinceStatsApp extends BaseAppSQL {
     @Override
     protected void run(StreamTableEnvironment tEnv) {
         // 使用sql
-        // 给flink的job设置job name
-        tEnv.getConfig().getConfiguration().setString("pipeline.name", "DWSProvinceStatsApp");
+       
         
         // 1. 建立动态表A与source关联(kafka中的topic)
         tEnv.executeSql("create table order_wide(" +

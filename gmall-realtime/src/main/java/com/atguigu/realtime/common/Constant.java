@@ -44,4 +44,5 @@ public class Constant {
     public static final String GOOD_COMMENT_FIVE_STARS = "1205";
     public static final String GOOD_COMMENT_FOUR_STARS = "1204";
     
+    public static final String SOURCE_SEARCH = "search";
 }

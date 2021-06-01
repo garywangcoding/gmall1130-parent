@@ -31,6 +31,7 @@ public abstract class BaseAppSQL {
             .enableExternalizedCheckpoints(CheckpointConfig.ExternalizedCheckpointCleanup.RETAIN_ON_CANCELLATION);
     
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env);
+        tEnv.getConfig().getConfiguration().setString("pipeline.name", ck);
         run(tEnv);
         try {
             env.execute(ck);  // 使用ck作为jobName
