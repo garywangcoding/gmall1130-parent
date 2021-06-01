@@ -198,8 +198,11 @@
         </dependency>
 
         <!--ClickHouse 依赖结束-->
-
-
+        <dependency>
+            <groupId>com.aliyun</groupId>
+            <artifactId>flink-connector-clickhouse</artifactId>
+            <version>1.12.0</version>
+        </dependency>
 
     </dependencies>
 
