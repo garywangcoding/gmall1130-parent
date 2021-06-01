@@ -1,5 +1,6 @@
 package com.atguigu.realtime.util;
 
+import com.atguigu.realtime.app.annotation.SinkTransient;
 import com.atguigu.realtime.bean.VisitorStats;
 import com.atguigu.realtime.common.Constant;
 import org.apache.flink.connector.jdbc.JdbcConnectionOptions;
@@ -32,8 +33,11 @@ public class MySinkUtil {
         // 拼接字段的名字: 从类中获取
         Field[] fields = tClass.getDeclaredFields();
         for (Field field : fields) {
-            String fn = field.getName();
-            sql.append(fn).append(",");
+            SinkTransient annotation = field.getAnnotation(SinkTransient.class);
+            if (annotation == null) {
+                String fn = field.getName();
+                sql.append(fn).append(",");
+            }
         }
         sql.deleteCharAt(sql.length() - 1);
         
@@ -41,8 +45,10 @@ public class MySinkUtil {
         
         // 拼接问号: 和前面的字段的个数保持一致
         for (Field field : fields) {
-            
-            sql.append("?,");
+            SinkTransient annotation = field.getAnnotation(SinkTransient.class);
+            if (annotation == null) {
+                sql.append("?,");
+            }
         }
         sql.deleteCharAt(sql.length() - 1);
         sql.append(")");
@@ -69,10 +75,14 @@ public class MySinkUtil {
                     // 如果给 ? 设置值?   要根据你的sql的定义
                     try {
                         Field[] fields = t.getClass().getDeclaredFields();
-                        for (int i = 0; i < fields.length; i++) {
-                            fields[i].setAccessible(true);
-                            Object value = fields[i].get(t);
-                            ps.setObject(i + 1, value);
+                        for (int i = 0, position = 1; i < fields.length; i++) {
+                            SinkTransient annotation = fields[i].getAnnotation(SinkTransient.class);
+                            if (annotation == null) {
+                                fields[i].setAccessible(true);
+                                Object value = fields[i].get(t);
+                                ps.setObject(position++, value);
+                            }
+                            
                         }
                     } catch (IllegalAccessException e) {
                         e.printStackTrace();

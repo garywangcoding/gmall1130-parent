@@ -7,7 +7,9 @@ import com.atguigu.realtime.app.function.DimAsyncFunction;
 import com.atguigu.realtime.bean.OrderWide;
 import com.atguigu.realtime.bean.PaymentWide;
 import com.atguigu.realtime.bean.ProductStats;
+import com.atguigu.realtime.common.Constant;
 import com.atguigu.realtime.util.MyDimUtil;
+import com.atguigu.realtime.util.MySinkUtil;
 import com.atguigu.realtime.util.MyTimeUtil;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.ReduceFunction;
@@ -58,9 +60,15 @@ public class DWSProductStatsApp extends BaseAppV2 {
         
         // join 维度信息
         SingleOutputStreamOperator<ProductStats> resultStream = joinDim(aggregateResult);
-        resultStream.print();
-        // 写入到clickhouse
         
+        // 写入到clickhouse
+        sendToClickhouse(resultStream);
+        
+    }
+    
+    private void sendToClickhouse(SingleOutputStreamOperator<ProductStats> resultStream) {
+        resultStream
+            .addSink(MySinkUtil.getClickHouseSink(CLICKHOUSE_DB, Constant.CLICKHOSUE_TABLE_PRODUCT_STATS_2021, ProductStats.class));
     }
     
     private SingleOutputStreamOperator<ProductStats> joinDim(SingleOutputStreamOperator<ProductStats> aggregateResult) {

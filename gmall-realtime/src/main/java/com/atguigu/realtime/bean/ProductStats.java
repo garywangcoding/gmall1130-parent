@@ -1,5 +1,6 @@
 package com.atguigu.realtime.bean;
 
+import com.atguigu.realtime.app.annotation.SinkTransient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -57,10 +58,12 @@ public class ProductStats {
     
     private Long good_comment_ct = 0L; //好评订单数
     
+    @SinkTransient
     private Set<Long> orderIdSet = new HashSet<>();  //用于统计订单数
     
+    @SinkTransient
     private Set<Long> paidOrderIdSet = new HashSet<>(); //用于统计支付订单数
-    
+    @SinkTransient
     private Set<Long> refundOrderIdSet = new HashSet<>();//用于退款支付订单数
     
     private Long ts; //统计时间戳

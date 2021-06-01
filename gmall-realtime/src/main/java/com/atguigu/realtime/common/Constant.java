@@ -35,6 +35,7 @@ public class Constant {
     public static final String DWM_PAYMENT_WIDE = "dwm_payment_wide";
     public static final String CLICKHOUSE_DB = "gmall2021";
     public static final String CLICKHOSUE_TABLE_VISITOR_STATS_2021 = "visitor_stats_2021";
+    public static final String CLICKHOSUE_TABLE_PRODUCT_STATS_2021 = "product_stats_2021";
     
     // 如果向让url指定倒具体的数据, 后面再追加数据库  CLICKHOSUE_URL_PRE + CLICKHOUSE_DB
     public static final String CLICKHOSUE_URL_PRE = "jdbc:clickhouse://hadoop162:8123/";
@@ -42,6 +43,5 @@ public class Constant {
     
     public static final String GOOD_COMMENT_FIVE_STARS = "1205";
     public static final String GOOD_COMMENT_FOUR_STARS = "1204";
-    
     
 }
