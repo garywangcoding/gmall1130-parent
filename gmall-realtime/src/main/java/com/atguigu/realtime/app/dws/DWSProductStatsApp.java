@@ -8,9 +8,7 @@ import com.atguigu.realtime.bean.OrderWide;
 import com.atguigu.realtime.bean.PaymentWide;
 import com.atguigu.realtime.bean.ProductStats;
 import com.atguigu.realtime.common.Constant;
-import com.atguigu.realtime.util.MyDimUtil;
-import com.atguigu.realtime.util.MySinkUtil;
-import com.atguigu.realtime.util.MyTimeUtil;
+import com.atguigu.realtime.util.*;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.api.common.functions.ReduceFunction;
 import org.apache.flink.streaming.api.datastream.AsyncDataStream;
@@ -64,6 +62,13 @@ public class DWSProductStatsApp extends BaseAppV2 {
         // 写入到clickhouse
         sendToClickhouse(resultStream);
         
+        // 写入到kafka中: 后面产品关键词统计需要
+        sendToKafka(resultStream);
+        
+    }
+    
+    private void sendToKafka(SingleOutputStreamOperator<ProductStats> resultStream) {
+        resultStream.addSink(MyKafkaUtil.getKafkaSink(Constant.DWS_PRODUCT_STATS));
     }
     
     private void sendToClickhouse(SingleOutputStreamOperator<ProductStats> resultStream) {

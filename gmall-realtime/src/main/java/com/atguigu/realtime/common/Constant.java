@@ -45,4 +45,11 @@ public class Constant {
     public static final String GOOD_COMMENT_FOUR_STARS = "1204";
     
     public static final String SOURCE_SEARCH = "search";
+    public static final String SOURCE_CLICK = "click";
+    public static final String SOURCE_ORDER = "order";
+    public static final String SOURCE_CART = "cart";
+    
+    
+    public static final String DWS_PRODUCT_STATS = "DWS_PRODUCT_STATS";
+    
 }
