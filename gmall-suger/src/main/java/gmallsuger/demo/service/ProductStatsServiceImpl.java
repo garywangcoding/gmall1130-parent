@@ -24,4 +24,14 @@ public class ProductStatsServiceImpl implements ProductStatsService {
         return product.getGVMByTM(date, limit);
     }
     
+    @Override
+    public List<Map<String, Object>> getGVMBySPU(int date, int limit) {
+        return product.getGVMBySpu(date, limit);
+    }
+    
+    @Override
+    public List<Map<String, Object>> getGVMByC3(int date, int limit) {
+        return product.getGVMByC3(date, limit);
+    }
+    
 }
