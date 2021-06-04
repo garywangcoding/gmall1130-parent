@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class VisitorStats {
     private String hour;
+    private String is_new;
     private Long uv_ct;
     private Long pv_ct;
     private Long uj_ct;

@@ -17,4 +17,9 @@ public class VisitorStatsServiceImpl implements VisitorStatsService{
         return visitor.getVisitorStatsByHour(date);
     }
     
+    @Override
+    public List<VisitorStats> getVisitorStatsByIsNew(int date) {
+        return visitor.getVisitorStatsByIsNew(date);
+    }
+    
 }
