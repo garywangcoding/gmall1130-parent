@@ -2,7 +2,9 @@ package gmallsuger.demo.controller;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import gmallsuger.demo.bean.ProvinceStats;
 import gmallsuger.demo.service.ProductStatsService;
+import gmallsuger.demo.service.ProvinceStatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -155,6 +157,51 @@ public class SugarController {
             row.put("c3_count", map.get("order_ct"));
             rows.add(row);
         }
+        result.put("data", data);
+    
+        return result.toJSONString();
+    }
+    
+    
+    
+    @Autowired
+    ProvinceStatsService province;
+    @RequestMapping("/sugar/province")
+    public String province(@RequestParam(value = "date", defaultValue = "0") int date) {
+        // 如果没有传入日期, 则使用当前日期
+        if (date == 0) {
+            date = Integer.parseInt(new SimpleDateFormat("yyyyMMdd").format(new Date()));
+        }
+    
+        List<ProvinceStats> list = province.getProvinceStatsByName(date);
+    
+        JSONObject result = new JSONObject();
+        result.put("status", 0);
+        result.put("msg", "");
+    
+        JSONObject data = new JSONObject();
+        JSONArray mapData = new JSONArray();
+        for (ProvinceStats ps : list) {
+            JSONObject obj = new JSONObject();
+            obj.put("name", ps.getProvince_name());
+            obj.put("value", ps.getOrder_amount());
+            JSONArray tooltipValues = new JSONArray();
+            tooltipValues.add(ps.getOrder_count());
+            obj.put("tooltipValues", tooltipValues);
+            
+            mapData.add(obj);
+        }
+        
+        data.put("mapData", mapData);
+    
+        data.put("valueName", "销售额");
+        
+    
+        JSONArray tooTipNames = new JSONArray();
+        tooTipNames.add("订单数2");
+        data.put("tooltipNames", tooTipNames);
+        
+    
         result.put("data", data);
     
         return result.toJSONString();
