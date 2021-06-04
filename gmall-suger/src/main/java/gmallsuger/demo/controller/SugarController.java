@@ -3,14 +3,17 @@ package gmallsuger.demo.controller;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import gmallsuger.demo.bean.ProvinceStats;
+import gmallsuger.demo.bean.VisitorStats;
 import gmallsuger.demo.service.ProductStatsService;
 import gmallsuger.demo.service.ProvinceStatsService;
+import gmallsuger.demo.service.VisitorStatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -201,6 +204,65 @@ public class SugarController {
         tooTipNames.add("订单数2");
         data.put("tooltipNames", tooTipNames);
         
+    
+        result.put("data", data);
+    
+        return result.toJSONString();
+    }
+    
+     @Autowired
+     VisitorStatsService visitor;
+    @RequestMapping("/sugar/visitor")
+    public String visitor(@RequestParam(value = "date", defaultValue = "0") int date) {
+        DecimalFormat df = new DecimalFormat("00");
+        // 如果没有传入日期, 则使用当前日期
+        if (date == 0) {
+            date = Integer.parseInt(new SimpleDateFormat("yyyyMMdd").format(new Date()));
+        }
+    
+        List<VisitorStats> list = visitor.getVisitorStatsByHour(date);
+    
+        JSONObject result = new JSONObject();
+        result.put("status", 0);
+        result.put("msg", "");
+    
+        JSONObject data = new JSONObject();
+    
+        JSONArray categories = new JSONArray();
+        // "00" "01"
+        for (int i = 0; i < 24; i++) {
+            categories.add(df.format(i));
+        }
+        
+        data.put("categories", categories);
+    
+        JSONArray series = new JSONArray();
+    
+        JSONObject uvObj = new JSONObject();
+        uvObj.put("name", "uv");
+        long[] uvs = new long[24];
+        for (VisitorStats vs : list) {
+            int hour = Integer.parseInt(vs.getHour());  // 10
+            uvs[hour] = vs.getUv_ct();
+        }
+        uvObj.put("data", uvs);
+        series.add(uvObj);
+    
+        
+        JSONObject pvObj = new JSONObject();
+        pvObj.put("name", "pv");
+        long[] pvs = new long[24];
+        for (VisitorStats vs : list) {
+            int hour = Integer.parseInt(vs.getHour());  // 10
+            pvs[hour] = vs.getPv_ct();
+        }
+        pvObj.put("data", pvs);
+        series.add(pvObj);
+    
+        
+        
+        
+        data.put("series", series);
     
         result.put("data", data);
     
